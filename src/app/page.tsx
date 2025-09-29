@@ -1,79 +1,108 @@
 'use client';
 
-import { useState } from 'react';
-import { ShoppingBag, Star, Shield, Mail, Phone, Instagram, Facebook, Twitter, Menu, X, ExternalLink, Smartphone, Home, Baby, Shirt, Gamepad2, Heart } from 'lucide-react';
-import Link from 'next/link';
+import { useState, useCallback, useMemo } from 'react';
+import { ShoppingBag, Star, Shield, Mail, Instagram, Facebook, Twitter, Menu, X, ExternalLink, Smartphone, Home, Baby, Shirt, Gamepad2, Heart } from 'lucide-react';
+
+interface FormData {
+  name: string;
+  email: string;
+  message: string;
+}
+
+interface Marketplace {
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  link: string;
+}
+
+interface Category {
+  name: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+  link: string;
+}
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [formData, setFormData] = useState<FormData>({ name: '', email: '', message: '' });
 
-  const scrollToSection = (sectionId: string) => {
+  const scrollToSection = useCallback((sectionId: string) => {
     const element = document.getElementById(sectionId);
-    element?.scrollIntoView({ behavior: 'smooth' });
-    setIsMenuOpen(false);
-  };
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+      setIsMenuOpen(false);
+    }
+  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Aqui você pode integrar com seu sistema de email
     alert('Obrigado pelo contato! Entraremos em contato em breve.');
     setFormData({ name: '', email: '', message: '' });
-  };
+  }, []);
 
-  const marketplaces = [
+  const handleInputChange = useCallback((field: keyof FormData) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setFormData(prev => ({ ...prev, [field]: e.target.value }));
+  }, []);
+
+  const marketplaces = useMemo<Marketplace[]>(() => [
     {
       name: 'Amazon',
       description: 'Milhões de produtos com entrega rápida',
       icon: '🛒',
       color: 'from-orange-400 to-orange-600',
-      link: '/amazon' // Link para página específica da Amazon
+      link: 'https://amazon.com.br'
     },
     {
       name: 'Mercado Livre',
       description: 'O maior marketplace da América Latina',
       icon: '💛',
       color: 'from-yellow-400 to-yellow-600',
-      link: '/mercado-livre' // Link para página específica do Mercado Livre
+      link: 'https://mercadolivre.com.br'
     },
     {
       name: 'Magazine Luiza',
       description: 'Tecnologia e casa com os melhores preços',
       icon: '💙',
       color: 'from-blue-400 to-blue-600',
-      link: '/magazine-luiza' // Link para página específica do Magazine Luiza
+      link: 'https://magazineluiza.com.br'
     },
     {
       name: 'Americanas',
       description: 'Variedade e conveniência em um só lugar',
       icon: '❤️',
       color: 'from-red-400 to-red-600',
-      link: '/americanas' // Link para página específica das Americanas
+      link: 'https://americanas.com.br'
     },
     {
       name: 'Shopee',
       description: 'Ofertas imperdíveis todos os dias',
       icon: '🧡',
       color: 'from-orange-500 to-pink-500',
-      link: '/shopee' // Link para página específica da Shopee
+      link: 'https://shopee.com.br'
     },
     {
       name: 'AliExpress',
       description: 'Produtos direto da China com frete grátis',
       icon: '🌟',
       color: 'from-purple-400 to-purple-600',
-      link: '/aliexpress' // Link para página específica do AliExpress
+      link: 'https://aliexpress.com'
     }
-  ];
+  ], []);
 
-  const categories = [
-    { name: 'Tecnologia', icon: Smartphone, color: 'text-blue-600', link: '/categoria/tecnologia' },
-    { name: 'Casa & Jardim', icon: Home, color: 'text-green-600', link: '/categoria/casa-jardim' },
-    { name: 'Moda', icon: Shirt, color: 'text-pink-600', link: '/categoria/moda' },
-    { name: 'Bebês', icon: Baby, color: 'text-purple-600', link: '/categoria/bebes' },
-    { name: 'Games', icon: Gamepad2, color: 'text-red-600', link: '/categoria/games' },
-    { name: 'Beleza', icon: Heart, color: 'text-rose-600', link: '/categoria/beleza' }
-  ];
+  const categories = useMemo<Category[]>(() => [
+    { name: 'Tecnologia', icon: Smartphone, color: 'text-blue-600', link: 'https://amazon.com.br/s?k=tecnologia' },
+    { name: 'Casa & Jardim', icon: Home, color: 'text-green-600', link: 'https://amazon.com.br/s?k=casa+jardim' },
+    { name: 'Moda', icon: Shirt, color: 'text-pink-600', link: 'https://amazon.com.br/s?k=moda' },
+    { name: 'Bebês', icon: Baby, color: 'text-purple-600', link: 'https://amazon.com.br/s?k=bebes' },
+    { name: 'Games', icon: Gamepad2, color: 'text-red-600', link: 'https://amazon.com.br/s?k=games' },
+    { name: 'Beleza', icon: Heart, color: 'text-rose-600', link: 'https://amazon.com.br/s?k=beleza' }
+  ], []);
+
+  const backgroundImageUrl = 'https://k6hrqrxuu8obbfwn.public.blob.vercel-storage.com/temp/adb866f1-f90b-4161-a0df-e4890fad1323.jpg';
 
   return (
     <div className="min-h-screen">
@@ -103,6 +132,7 @@ export default function LandingPage() {
             <button 
               className="md:hidden"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Toggle menu"
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -130,13 +160,8 @@ export default function LandingPage() {
       {/* Seção Hero com Background */}
       <section 
         id="inicio" 
-        className="min-h-screen flex items-center justify-center relative"
-        style={{ 
-          backgroundImage: 'url(https://k6hrqrxuu8obbfwn.public.blob.vercel-storage.com/temp/adb866f1-f90b-4161-a0df-e4890fad1323.jpg)', 
-          backgroundSize: 'cover', 
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
-        }}
+        className="min-h-screen flex items-center justify-center relative bg-cover bg-center bg-fixed"
+        style={{ backgroundImage: `url(${backgroundImageUrl})` }}
       >
         <div className="absolute inset-0 bg-black/40"></div>
         <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
@@ -158,13 +183,8 @@ export default function LandingPage() {
       {/* Seção Ofertas */}
       <section 
         id="ofertas" 
-        className="py-20 relative"
-        style={{ 
-          backgroundImage: 'url(https://k6hrqrxuu8obbfwn.public.blob.vercel-storage.com/temp/adb866f1-f90b-4161-a0df-e4890fad1323.jpg)', 
-          backgroundSize: 'cover', 
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
-        }}
+        className="py-20 relative bg-cover bg-center bg-fixed"
+        style={{ backgroundImage: `url(${backgroundImageUrl})` }}
       >
         <div className="absolute inset-0 bg-white/90"></div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -181,16 +201,21 @@ export default function LandingPage() {
           <div className="mb-12">
             <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Categorias</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-              {categories.map((category, index) => (
-                <Link 
-                  key={index} 
-                  href={category.link}
-                  className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 text-center group hover:scale-105"
-                >
-                  <category.icon className={`h-8 w-8 mx-auto mb-2 ${category.color} group-hover:scale-110 transition-transform`} />
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">{category.name}</span>
-                </Link>
-              ))}
+              {categories.map((category, index) => {
+                const IconComponent = category.icon;
+                return (
+                  <a 
+                    key={index} 
+                    href={category.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 text-center group hover:scale-105"
+                  >
+                    <IconComponent className={`h-8 w-8 mx-auto mb-2 ${category.color} group-hover:scale-110 transition-transform`} />
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">{category.name}</span>
+                  </a>
+                );
+              })}
             </div>
           </div>
 
@@ -199,18 +224,20 @@ export default function LandingPage() {
             {marketplaces.map((marketplace, index) => (
               <div key={index} className="bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden">
                 <div className={`h-32 bg-gradient-to-r ${marketplace.color} flex items-center justify-center`}>
-                  <span className="text-6xl">{marketplace.icon}</span>
+                  <span className="text-6xl" role="img" aria-label={marketplace.name}>{marketplace.icon}</span>
                 </div>
                 <div className="p-6">
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">{marketplace.name}</h3>
                   <p className="text-gray-600 mb-4">{marketplace.description}</p>
-                  <Link 
+                  <a 
                     href={marketplace.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center justify-center w-full bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 group"
                   >
                     Ver Ofertas
                     <ExternalLink className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </Link>
+                  </a>
                 </div>
               </div>
             ))}
@@ -220,13 +247,8 @@ export default function LandingPage() {
 
       {/* Seção Sobre */}
       <section 
-        className="py-20 relative"
-        style={{ 
-          backgroundImage: 'url(https://k6hrqrxuu8obbfwn.public.blob.vercel-storage.com/temp/adb866f1-f90b-4161-a0df-e4890fad1323.jpg)', 
-          backgroundSize: 'cover', 
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
-        }}
+        className="py-20 relative bg-cover bg-center bg-fixed"
+        style={{ backgroundImage: `url(${backgroundImageUrl})` }}
       >
         <div className="absolute inset-0 bg-black/60"></div>
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -256,13 +278,8 @@ export default function LandingPage() {
       {/* Seção Contato */}
       <section 
         id="contato" 
-        className="py-20 relative"
-        style={{ 
-          backgroundImage: 'url(https://k6hrqrxuu8obbfwn.public.blob.vercel-storage.com/temp/adb866f1-f90b-4161-a0df-e4890fad1323.jpg)', 
-          backgroundSize: 'cover', 
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
-        }}
+        className="py-20 relative bg-cover bg-center bg-fixed"
+        style={{ backgroundImage: `url(${backgroundImageUrl})` }}
       >
         <div className="absolute inset-0 bg-white/90"></div>
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -288,7 +305,7 @@ export default function LandingPage() {
                     id="name"
                     required
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    onChange={handleInputChange('name')}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="Seu nome completo"
                   />
@@ -302,7 +319,7 @@ export default function LandingPage() {
                     id="email"
                     required
                     value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    onChange={handleInputChange('email')}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="seu@email.com"
                   />
@@ -316,7 +333,7 @@ export default function LandingPage() {
                     required
                     rows={5}
                     value={formData.message}
-                    onChange={(e) => setFormData({...formData, message: e.target.value})}
+                    onChange={handleInputChange('message')}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
                     placeholder="Digite sua mensagem aqui..."
                   />
@@ -358,13 +375,8 @@ export default function LandingPage() {
 
       {/* Rodapé */}
       <footer 
-        className="py-12 relative"
-        style={{ 
-          backgroundImage: 'url(https://k6hrqrxuu8obbfwn.public.blob.vercel-storage.com/temp/adb866f1-f90b-4161-a0df-e4890fad1323.jpg)', 
-          backgroundSize: 'cover', 
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
-        }}
+        className="py-12 relative bg-cover bg-center bg-fixed"
+        style={{ backgroundImage: `url(${backgroundImageUrl})` }}
       >
         <div className="absolute inset-0 bg-black/80"></div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
