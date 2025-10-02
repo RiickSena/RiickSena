@@ -8,7 +8,7 @@ interface LoginFormProps {
   onSuccess: () => void;
 }
 
-export default function LoginForm({ onSuccess }: LoginFormProps) {
+const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -139,4 +139,6 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
       </div>
     </div>
   );
-}
+};
+
+export default LoginForm;
