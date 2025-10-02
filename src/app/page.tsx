@@ -1,7 +1,11 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
-import { ShoppingBag, Star, Shield, Mail, Instagram, Facebook, Twitter, Menu, X, ExternalLink, Smartphone, Home, Baby, Shirt, Gamepad2, Heart } from 'lucide-react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { ShoppingBag, Star, Shield, Mail, Instagram, Facebook, Twitter, Menu, X, ExternalLink, Smartphone, Home, Baby, Shirt, Gamepad2, Heart, Settings } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import LoginForm from '@/components/LoginForm';
+import AdminPanel from '@/components/AdminPanel';
+import { supabase, ContentSection, isSupabaseReady } from '@/lib/supabase';
 
 interface FormData {
   name: string;
@@ -27,6 +31,55 @@ interface Category {
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>({ name: '', email: '', message: '' });
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [contentSections, setContentSections] = useState<ContentSection[]>([]);
+  const [loadingContent, setLoadingContent] = useState(true);
+  
+  const { user, loading: authLoading, isAdmin } = useAuth();
+
+  // Carregar conteúdo do banco de dados
+  useEffect(() => {
+    loadContent();
+  }, []);
+
+  const loadContent = async () => {
+    try {
+      // Se Supabase não estiver configurado, usar dados padrão
+      if (!isSupabaseReady()) {
+        setLoadingContent(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('content_sections')
+        .select('*')
+        .order('section_name');
+
+      if (error) throw error;
+      if (data) setContentSections(data);
+    } catch (error) {
+      console.error('Erro ao carregar conteúdo:', error);
+    } finally {
+      setLoadingContent(false);
+    }
+  };
+
+  // Verificar se usuário é admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (user) {
+        const adminStatus = await isAdmin();
+        if (adminStatus && showAdmin) {
+          setIsAdminMode(true);
+        }
+      }
+    };
+    
+    if (!authLoading) {
+      checkAdminStatus();
+    }
+  }, [user, authLoading, isAdmin, showAdmin]);
 
   const scrollToSection = useCallback((sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -48,50 +101,63 @@ export default function LandingPage() {
     setFormData(prev => ({ ...prev, [field]: e.target.value }));
   }, []);
 
-  const marketplaces = useMemo<Marketplace[]>(() => [
-    {
-      name: 'Amazon',
-      description: 'Milhões de produtos com entrega rápida',
-      icon: '🛒',
-      color: 'from-orange-400 to-orange-600',
-      link: 'https://amazon.com.br'
-    },
-    {
-      name: 'Mercado Livre',
-      description: 'O maior marketplace da América Latina',
-      icon: '💛',
-      color: 'from-yellow-400 to-yellow-600',
-      link: 'https://mercadolivre.com.br'
-    },
-    {
-      name: 'Magazine Luiza',
-      description: 'Tecnologia e casa com os melhores preços',
-      icon: '💙',
-      color: 'from-blue-400 to-blue-600',
-      link: 'https://magazineluiza.com.br'
-    },
-    {
-      name: 'Americanas',
-      description: 'Variedade e conveniência em um só lugar',
-      icon: '❤️',
-      color: 'from-red-400 to-red-600',
-      link: 'https://americanas.com.br'
-    },
-    {
-      name: 'Shopee',
-      description: 'Ofertas imperdíveis todos os dias',
-      icon: '🧡',
-      color: 'from-orange-500 to-pink-500',
-      link: 'https://shopee.com.br'
-    },
-    {
-      name: 'AliExpress',
-      description: 'Produtos direto da China com frete grátis',
-      icon: '🌟',
-      color: 'from-purple-400 to-purple-600',
-      link: 'https://aliexpress.com'
+  // Função para obter conteúdo de uma seção
+  const getSectionContent = (sectionName: string) => {
+    const section = contentSections.find(s => s.section_name === sectionName);
+    return section || null;
+  };
+
+  const marketplaces = useMemo<Marketplace[]>(() => {
+    const offersSection = getSectionContent('offers');
+    if (offersSection?.content?.marketplaces) {
+      return offersSection.content.marketplaces;
     }
-  ], []);
+    
+    return [
+      {
+        name: 'Amazon',
+        description: 'Milhões de produtos com entrega rápida',
+        icon: '🛒',
+        color: 'from-orange-400 to-orange-600',
+        link: 'https://amazon.com.br'
+      },
+      {
+        name: 'Mercado Livre',
+        description: 'O maior marketplace da América Latina',
+        icon: '💛',
+        color: 'from-yellow-400 to-yellow-600',
+        link: 'https://mercadolivre.com.br'
+      },
+      {
+        name: 'Magazine Luiza',
+        description: 'Tecnologia e casa com os melhores preços',
+        icon: '💙',
+        color: 'from-blue-400 to-blue-600',
+        link: 'https://magazineluiza.com.br'
+      },
+      {
+        name: 'Americanas',
+        description: 'Variedade e conveniência em um só lugar',
+        icon: '❤️',
+        color: 'from-red-400 to-red-600',
+        link: 'https://americanas.com.br'
+      },
+      {
+        name: 'Shopee',
+        description: 'Ofertas imperdíveis todos os dias',
+        icon: '🧡',
+        color: 'from-orange-500 to-pink-500',
+        link: 'https://shopee.com.br'
+      },
+      {
+        name: 'AliExpress',
+        description: 'Produtos direto da China com frete grátis',
+        icon: '🌟',
+        color: 'from-purple-400 to-purple-600',
+        link: 'https://aliexpress.com'
+      }
+    ];
+  }, [contentSections]);
 
   const categories = useMemo<Category[]>(() => [
     { name: 'Tecnologia', icon: Smartphone, color: 'text-blue-600', link: 'https://amazon.com.br/s?k=tecnologia' },
@@ -102,10 +168,45 @@ export default function LandingPage() {
     { name: 'Beleza', icon: Heart, color: 'text-rose-600', link: 'https://amazon.com.br/s?k=beleza' }
   ], []);
 
-  const backgroundImageUrl = 'https://k6hrqrxuu8obbfwn.public.blob.vercel-storage.com/temp/adb866f1-f90b-4161-a0df-e4890fad1323.jpg';
+  // Obter dados das seções
+  const heroSection = getSectionContent('hero');
+  const offersSection = getSectionContent('offers');
+  const aboutSection = getSectionContent('about');
+
+  const backgroundImageUrl = heroSection?.content?.backgroundImage || 'https://k6hrqrxuu8obbfwn.public.blob.vercel-storage.com/temp/adb866f1-f90b-4161-a0df-e4890fad1323.jpg';
+
+  // Mostrar painel de login se solicitado
+  if (showAdmin && !user) {
+    return <LoginForm onSuccess={() => setShowAdmin(false)} />;
+  }
+
+  // Mostrar painel administrativo se usuário é admin
+  if (isAdminMode && user) {
+    return <AdminPanel onLogout={() => { setIsAdminMode(false); setShowAdmin(false); }} />;
+  }
+
+  if (authLoading || loadingContent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
+      {/* Banner de configuração do Supabase */}
+      {!isSupabaseReady() && (
+        <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 text-center">
+          <p className="font-medium">
+            ⚠️ Para usar o painel administrativo, configure suas credenciais do Supabase no arquivo .env.local
+          </p>
+        </div>
+      )}
+
       {/* Header Fixo */}
       <header className="fixed top-0 w-full bg-white/95 backdrop-blur-sm shadow-lg z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -125,6 +226,14 @@ export default function LandingPage() {
               </button>
               <button onClick={() => scrollToSection('contato')} className="text-gray-700 hover:text-blue-600 transition-colors">
                 Contato
+              </button>
+              {/* Botão Admin (oculto) */}
+              <button 
+                onClick={() => setShowAdmin(true)} 
+                className="text-gray-400 hover:text-blue-600 transition-colors"
+                title="Painel Administrativo"
+              >
+                <Settings className="h-5 w-5" />
               </button>
             </nav>
 
@@ -151,6 +260,9 @@ export default function LandingPage() {
                 <button onClick={() => scrollToSection('contato')} className="block px-3 py-2 text-gray-700 hover:text-blue-600">
                   Contato
                 </button>
+                <button onClick={() => setShowAdmin(true)} className="block px-3 py-2 text-gray-400 hover:text-blue-600">
+                  Admin
+                </button>
               </div>
             </div>
           )}
@@ -166,16 +278,16 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-black/40"></div>
         <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
-            Todos os Melhores Descontos em um só Lugar
+            {heroSection?.title || 'Todos os Melhores Descontos em um só Lugar'}
           </h1>
           <p className="text-xl sm:text-2xl text-white/90 mb-8 max-w-3xl mx-auto">
-            Acesse rapidamente os melhores links de <strong>Mercado Livre</strong>, <strong>Amazon</strong>, <strong>Magazine Luiza</strong>, <strong>Americanas</strong>, <strong>Shopee</strong> e <strong>AliExpress</strong>. Economize tempo e dinheiro!
+            {heroSection?.description || 'Acesse rapidamente os melhores links de Mercado Livre, Amazon, Magazine Luiza, Americanas, Shopee e AliExpress. Economize tempo e dinheiro!'}
           </p>
           <button 
             onClick={() => scrollToSection('ofertas')}
             className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-bold py-4 px-8 rounded-full text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl"
           >
-            Aproveitar Agora
+            {heroSection?.content?.buttonText || 'Aproveitar Agora'}
           </button>
         </div>
       </section>
@@ -190,10 +302,10 @@ export default function LandingPage() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Ofertas Exclusivas
+              {offersSection?.title || 'Ofertas Exclusivas'}
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Clique e seja redirecionado diretamente para as melhores promoções dos principais marketplaces
+              {offersSection?.description || 'Clique e seja redirecionado diretamente para as melhores promoções dos principais marketplaces'}
             </p>
           </div>
 
@@ -253,7 +365,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-black/60"></div>
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-8">
-            Por que escolher nosso site?
+            {aboutSection?.title || 'Por que escolher nosso site?'}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
